@@ -42,25 +42,84 @@ def predict_lands(
     return model_key, round(pred)
 
 
-# Streamlit interface
-st.title("Recommended Lands Predictor")
+# ---- Streamlit interface ----
+st.set_page_config(page_title="Lands Predictor", layout="centered")
+st.title("Lands Predictor")
+st.caption("Optimize lands count for your deck")
 
-avg_mv = st.number_input("Average Mana Value", value=2.37)
-draw_spells = st.number_input("Cheap Card Draw", value=11)
-ramp_spells = st.number_input("Cheap Mana Prod", value=10)
-nonmythic_mdfc = st.number_input("Non-Mythic MDFCs", value=0)
-mythic_mdfc = st.number_input("Mythic MDFCs", value=0)
-has_companion = st.selectbox("Has Companion?", [0,1])
-deck_size = st.number_input("Deck Size", value=100)
+# --- Initialize session_state ---
+default_values = {
+    "avg_mv": 2.37,
+    "draw_spells": 11,
+    "ramp_spells": 10,
+    "nonmythic_mdfc": 0,
+    "mythic_mdfc": 0,
+    "deck_size": 100
+}
 
-model_choice = st.selectbox("Model", ["Best","LR","RF","XGB"])
-if model_choice == "Best":
-    model_choice = None
+for key, val in default_values.items():
+    if key not in st.session_state:
+        st.session_state[key] = val
 
-if st.button("Predict"):
+# --- Helper: slider + number_input ---
+def slider_number_input(
+        label, key, min_val, max_val, step, is_float=False, fmt="%.0f"
+    ):
+    col1, col2 = st.columns([3,1])
+    with col1:
+        val = st.slider(
+            label, min_val, max_val,
+            float(st.session_state[key]) if is_float else st.session_state[key],
+            step=step
+        )
+        st.session_state[key] = float(val) if is_float else int(val)
+    with col2:
+        # key unico per number_input
+        val2 = st.number_input(
+            "", 
+            min_val, max_val, 
+            st.session_state[key], 
+            step=step, 
+            format=fmt if is_float else "%d",
+            key=f"{key}_num"
+        )
+        st.session_state[key] = float(val2) if is_float else int(val2)
+
+
+# --- Parametri ---
+with st.expander("Insert deck params", expanded=True):
+    slider_number_input(
+        "Average Mana Value", "avg_mv", 1.0, 6.0, 0.01, is_float=True, fmt="%.2f"
+    )
+    slider_number_input("Cheap Card Draw", "draw_spells", 0, 50, 1)
+    slider_number_input("Cheap Mana Prod", "ramp_spells", 0, 50, 1)
+    slider_number_input("Non-Mythic MDFCs", "nonmythic_mdfc", 0, 20, 1)
+    slider_number_input("Mythic MDFCs", "mythic_mdfc", 0, 20, 1)
+    slider_number_input("Deck Size", "deck_size", 40, 200, 1)
+
+# --- Companion ---
+has_companion = st.radio("Has Companion?", [0, 1], index=0, horizontal=True)
+
+# --- Model choice ---
+model_choice = st.selectbox(
+    "Choose Model", ["LR", "RF", "XGB"], index=0
+)
+
+# --- Predict button ---
+if st.button("🔮 Predict"):
     model_used, lands_needed = predict_lands(
-        avg_mv, draw_spells, ramp_spells, has_companion,
-        nonmythic_mdfc, mythic_mdfc, deck_size,
+        st.session_state["avg_mv"],
+        st.session_state["draw_spells"],
+        st.session_state["ramp_spells"],
+        has_companion,
+        st.session_state["nonmythic_mdfc"],
+        st.session_state["mythic_mdfc"],
+        st.session_state["deck_size"],
         model_choice=model_choice
     )
-    st.success(f"Model used: {model_used}, Recommended lands: {lands_needed}")
+    st.success(f"✅ Recommended Lands: **{lands_needed}**")
+
+
+# "Best", 
+# if model_choice == "Best":
+#     model_choice = None
