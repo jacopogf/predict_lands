@@ -11,7 +11,7 @@ import gdown
 MODEL_PATH = ("trained_models.joblib")
 if not os.path.exists(MODEL_PATH):
     url = "https://drive.google.com/file/d/1sqXtG4sI_MdXIzZ0dvcn3PiHv_dxallP/view?usp=share_link"
-    gdown.download(url, MODEL_PATH, quiet=False)
+    gdown.download(url, MODEL_PATH, quiet=False, fuzzy=True)
 
 models = joblib.load(MODEL_PATH)
 
