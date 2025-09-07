@@ -8,11 +8,12 @@ import gdown
 
 # %%
 # Load trained models
-models = joblib.load("trained_models.joblib")
-if not os.path.exists(models):
+MODEL_PATH = ("trained_models.joblib")
+if not os.path.exists(MODEL_PATH):
     url = "https://drive.google.com/file/d/1sqXtG4sI_MdXIzZ0dvcn3PiHv_dxallP/view?usp=share_link"
-    gdown.download(url, models, quiet=False)
+    gdown.download(url, MODEL_PATH, quiet=False)
 
+models = joblib.load(MODEL_PATH)
 
 # %%
 def predict_lands(
